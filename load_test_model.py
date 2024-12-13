@@ -1,7 +1,8 @@
 import spacy
+#python -m spacy train config.cfg --output .\{lang}_boot_sm --paths.train .\train
 
-nlp = spacy.load("trained_model")
-doc = nlp(  "سوريا: تعديل وزاري واسع يشمل 8 حقائب" )
+nlp = spacy.load("arabic/trained_model")
+doc = nlp(  " سوريا: تعديل وزاري واسع يشمل 8 حقائب" )
 for token in doc:
     token.pos_ = token.tag_
     print(token)
