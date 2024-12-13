@@ -5,11 +5,14 @@ import random
 import os
 
 # Step 1: Load the blank model for POS tagging
-nlp = spacy.blank("fa")  # Use 'en' or a language model if necessary
+
+language = 'arabic'
+lang_code = 'ar'
+nlp = spacy.load(f"{lang_code}")  # Use 'en' or a language model if necessary
 
 # Step 2: Load the training and testing data from .spacy files
-train_data_path = "train"  # Directory with the train data in .spacy format
-test_data_path = "test"    # Directory with the test data in .spacy format
+train_data_path = f"{language}/train"  # Directory with the train data in .spacy format
+test_data_path = f"{language}/test"    # Directory with the test data in .spacy format
 
 
 def load_data(path):
@@ -40,7 +43,8 @@ for example in train_data:
 
 representative_batch = train_data[:10]  # You can select a small batch (e.g., first 10 examples)
 
-tagger.add_label('X')
+tagger.add_label('PROPN')
+tagger.add_label('INTJ')
 # Initialize the tagger with the representative batch
 tagger.initialize(lambda: iter(representative_batch))
 
@@ -75,7 +79,7 @@ for example in test_data:
 
 accuracy = correct / total if total else 0
 print(f"Accuracy: {accuracy * 100:.2f}%")
-
+# python -m spacy convert arabic\train\ar_padt-ud-train.conllu arabic\train\ -n 10 --converter conllu
 # Step 8: Save the trained model
-nlp.to_disk("./trained_model")  # Replace with the directory where you want to save the model
-print("Model saved to /trained_model")
+nlp.to_disk(f"{language}/{lang_code}_pos_sm")  # Replace with the directory where you want to save the model
+print(f"Model saved to {language}/{lang_code}_pos_sm")
