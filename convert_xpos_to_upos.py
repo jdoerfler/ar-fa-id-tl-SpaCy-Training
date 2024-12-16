@@ -31,8 +31,8 @@ def convert_xpos_to_upos_in_directory(directory):
 
             print(f"Original file {input_file} has been updated.")
 
-languages = ['arabic' ] #persian','indonesian','arabic','tagalog']
-datasets = ['train' ] #,'test']
+languages = ['persian','indonesian','arabic','tagalog']
+datasets = ['train' ,'test']
 for l in languages:
     for d in datasets:
         directory = f'{l}/{d}'

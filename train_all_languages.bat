@@ -1,7 +1,7 @@
 @echo off
 
 REM Explicitly define the language directories
-set "languages=arabic"
+set "languages=arabic indonesian persian tagalog"
 
 REM Loop through each specified language directory
 for %%L in (%languages%) do (
@@ -30,7 +30,7 @@ for %%L in (%languages%) do (
 
     REM Call the evaluation function in the language directory
     echo Running spacy evaluation for %%L
-    python -m spacy evaluate ./output/model_best %%L\test\ --gpu-id 0
+    python -m spacy evaluate ./output/model-best ./test --gpu-id 0
     
     REM Return to the base directory
     popd
