@@ -1,7 +1,7 @@
 @echo off
 
 REM Explicitly define the language directories
-set "languages=arabic english spanish"
+set "languages=arabic"
 
 REM Loop through each specified language directory
 for %%L in (%languages%) do (
@@ -11,15 +11,16 @@ for %%L in (%languages%) do (
     
     REM Loop through train and test subdirectories
     for %%T in (train test) do (
-        REM Create output directory for converted files
-        mkdir %%L\%%T\converted
-        
         REM Loop through each .conllu file in the current subdirectory (train or test)
         echo Processing %%T subdirectory in %%L
         for %%F in (%%L\%%T\*.conllu) do (
-            REM Convert the .conllu file to .spacy format
-            echo Converting %%F to .spacy format
-            python -m spacy convert "%%F" "%%L\%%T\converted" -n 10 --converter conllu
+            REM Get the full path of the .conllu file and derive the output path
+            set "conllu_file=%%F"
+            set "spacy_file=%%~dpF%%~nF.spacy"
+            
+            REM Convert the .conllu file to .spacy format and overwrite the original
+            echo Converting %%F to .spacy format at %%~dpF
+            python -m spacy convert "%%F" "%%~dpF" -n 10 --converter conllu
         )
     )
 

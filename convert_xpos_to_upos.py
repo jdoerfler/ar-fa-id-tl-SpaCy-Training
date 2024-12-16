@@ -1,15 +1,19 @@
 import os
 
-def convert_xpos_to_upos_in_directory(directory):
+def convert_xpos_to_upos_in_directory(directory): 
     # Scan all .conllu files in the directory
     for filename in os.listdir(directory):
         if filename.endswith(".conllu"):  # Only process .conllu files
             input_file = os.path.join(directory, filename)
-            output_file = os.path.join(directory, f"updated_{filename}")
             print(f"Processing {input_file}...")
 
-            with open(input_file, 'r', encoding='utf-8') as infile, open(output_file, 'w', encoding='utf-8') as outfile:
-                for line in infile:
+            # Open the original file for reading, and for writing back the changes (overwrite)
+            with open(input_file, 'r', encoding='utf-8') as infile:
+                lines = infile.readlines()  # Read all lines
+
+            # Now overwrite the same file with the changes
+            with open(input_file, 'w', encoding='utf-8') as outfile:
+                for line in lines:
                     if line.startswith("#"):
                         # Keep the comment lines (metadata)
                         outfile.write(line)
@@ -25,10 +29,10 @@ def convert_xpos_to_upos_in_directory(directory):
                             # Just write empty lines (e.g., between sentences)
                             outfile.write(line)
 
-            print(f"Updated file saved as {output_file}")
+            print(f"Original file {input_file} has been updated.")
 
-languages = ['persian','indonesian','arabic','tagalog']
-datasets = ['train','test']
+languages = ['arabic' ] #persian','indonesian','arabic','tagalog']
+datasets = ['train' ] #,'test']
 for l in languages:
     for d in datasets:
         directory = f'{l}/{d}'
