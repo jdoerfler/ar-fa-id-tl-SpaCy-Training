@@ -1,3 +1,4 @@
+For all .conllu files, ran convert_xpos_to_upos to let tagger train off just part of speech
 ### python -m spacy convert {language}\{train_or_test}\{lang_code}_{dataset}-ud-{train_or_test}.conllu {language}\{train_or_test}\ -n 10 --converter conllu
 ### python -m spacy train config.cfg --output ./output --gpu-id 0
 ### python -m spacy evaluate {language}/output/{model_name} {language}/test/ --gpu-id 0
