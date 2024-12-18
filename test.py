@@ -5,7 +5,7 @@ from spacy.training.example import Example
 if __name__ == "__main__":
     languages = ['arabic','indonesian','persian','tagalog']
     lang_codes = ['ar','id','fa','tl']
-    # spacy.require_gpu()
+    spacy.prefer_gpu()
 
     for language, lang_code in zip(languages, lang_codes):
         nlp = spacy.load(f"{language}/output/{lang_code}_dep_web_sm")
@@ -23,9 +23,9 @@ if __name__ == "__main__":
 
         # Print evaluation results
         print(f"Evaluation results for {language} ({lang_code}):")
-        print(f"  - Precision: {scores['token_p']:.4f}")
-        print(f"  - Recall: {scores['token_r']:.4f}")
-        print(f"  - F1 Score: {scores['token_f']:.4f}")
+        # print(f"  - Precision: {scores['token_p']:.4f}")
+        # print(f"  - Recall: {scores['token_r']:.4f}")
+        # print(f"  - F1 Score: {scores['token_f']:.4f}")
         print(f"  - Tagger accuracy: {scores['tag_acc']:.4f}")
         print(f"  - Dep head accuracy: {scores['dep_uas']:.4f}")
         print(f"  - Dep label accuracy: {scores['dep_las']:.4f}")
