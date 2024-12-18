@@ -4,13 +4,28 @@ import random
 import data
 import time
 
-
+"""
+TODO: implement dev set of data
+TODO: implement following half-pseudo to checkpoint on best models
+# Evaluate on validation set
+    score = evaluate(nlp, dev_data)
+    
+    if score > best_score:
+        best_score = score
+        # Save model checkpoint
+        nlp.to_disk(f"model_epoch_{epoch}")
+"""
 if __name__ == "__main__":
-    languages = ['persian','tagalog'] # ['arabic']#,
-    lang_codes = ['fa','tl'] # ar
+    languages = ['tagalog','persian'] # ['arabic']#,
+    lang_codes = ['tl', 'fa'] # ar
+    if spacy.prefer_gpu():
+        spacy.prefer_gpu()
+        print("Running with \033[1;92mGPU\033[0m]")
+    else:
+        print("Running with \033[1;31mNO GPU\033[0m")
 
     for i, language in enumerate(languages):
-        spacy.prefer_gpu()
+        
         start_time = time.time()
         # Initialize the spacy model using spacy_conll
         nlp = spacy.blank(f"{lang_codes[i]}")
@@ -57,6 +72,11 @@ if __name__ == "__main__":
 
         # Save the trained model
         nlp.to_disk(f"{language}/output/{lang_codes[i]}_dep_web_sm")
-        print("Training complete and model saved to disk.")
         end_time = time.time()
-        print(f"Time elapsed for {language}: {end_time - start_time}")
+        print("@" * 60)
+        print(f"     Time elapsed for {language}: {end_time - start_time}  ")
+        print(f" ________________________________________________________ ")
+        print(f"|                                                        | ")
+        print(f"|      Training complete and model saved to disk.        |")
+        print(f"|________________________________________________________|")
+        print("@" * 60)
