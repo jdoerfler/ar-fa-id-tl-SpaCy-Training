@@ -3,9 +3,9 @@ import data
 from spacy.training.example import Example
 
 if __name__ == "__main__":
-    languages = ['arabic'] #,'indonesian','persian','tagalog']
+    languages = ['arabic','indonesian','persian','tagalog']
     lang_codes = ['ar','id','fa','tl']
-    spacy.require_gpu()
+    # spacy.require_gpu()
 
     for language, lang_code in zip(languages, lang_codes):
         nlp = spacy.load(f"{language}/output/{lang_code}_dep_web_sm")
