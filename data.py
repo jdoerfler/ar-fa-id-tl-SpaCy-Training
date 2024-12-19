@@ -2,6 +2,7 @@ import os
 import re
 from spacy.training.example import Example 
 import spacy_conll
+from conllu import parse
 
 def get_conllu_filepaths_from_directory(directory: str) -> list[str]:
     filepaths = []
@@ -78,3 +79,63 @@ def get_conll_data(directory: str, nlp):
     print(f"Spacy-friendly data created with \033[1;92m{len(conll_data)}\033[0m samples!")
     print("=" * 60)
     return conll_data, pos_types, dep_types
+
+def get_conllu_data(directory: str, nlp):
+    combined_conllu_data = []
+    filepaths = get_conllu_filepaths_from_directory(directory)
+    # conll_nlp = spacy_conll.ConllParser(spacy_conll.init_parser('xx_ent_wiki_sm', 'spacy'))
+    
+    # pos_types = []
+    # dep_types = []
+    # Loop through all CoNLL files and parse them
+    for filepath in filepaths:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            conllu_data = f.read()
+
+        # Parse the CONLL-U data
+        sentences = parse(conllu_data)
+        
+        # Prepare a list to store the training examples
+        training_data = []
+
+        for sentence in sentences:
+            # Extract the tokens and their annotations for this sentence
+            words = []
+            tags = []
+            heads = []
+            deps = []
+
+            # Process each token in the sentence
+            for token in sentence:
+                # Get the text (word), POS, and dependency relation
+                word = token['form']
+                pos_tag = token['upostag']
+                dep_rel = token['deprel']
+                head = token['head']  # Head is 1-based index
+
+                # Append to the lists
+                words.append(word)
+                tags.append(pos_tag)
+                heads.append(head)
+                deps.append(dep_rel)
+
+
+            # Create a doc object using the words (this will use spaCy's tokenizer)
+            doc = nlp.make_doc(" ".join(words))  # Create a doc from the sentence
+            annotations = {
+                "words": words,   # The words (tokens)
+                "tags": tags,     # The POS tags
+                "heads": heads,   # The head (parent) indices
+                "deps": deps,     # Dependency relations
+            }
+            # Create the Example object with the annotations
+            example = Example.from_dict(doc, annotations)
+            
+            # Append the example to the training data list
+            training_data.append(example)
+        combined_conllu_data.append(training_data)
+    
+    print("=" * 60)
+    print(f"Spacy-friendly data created with \033[1;92m{len(combined_conllu_data)}\033[0m samples!")
+    print("=" * 60)
+    return combined_conllu_data#, pos_types, dep_types

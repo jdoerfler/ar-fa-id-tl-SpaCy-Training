@@ -1,58 +1,51 @@
 import spacy
-from spacy.util import minibatch, compounding
-import random
-import data
 import time
+import random
+from spacy.training.example import Example
+from spacy.util import minibatch, compounding
+import data  # Assuming `data` is your custom module to load training data
 
-"""
-TODO: implement dev set of data
-TODO: implement following half-pseudo to checkpoint on best models
-# Evaluate on validation set
-    score = evaluate(nlp, dev_data)
-    
-    if score > best_score:
-        best_score = score
-        # Save model checkpoint
-        nlp.to_disk(f"model_epoch_{epoch}")
-"""
 if __name__ == "__main__":
-    languages = ['tagalog','persian'] # ['arabic']#,
-    lang_codes = ['tl', 'fa'] # ar
-    if spacy.prefer_gpu():
-        spacy.prefer_gpu()
-        print("Running with \033[1;92mGPU\033[0m]")
-    else:
-        print("Running with \033[1;31mNO GPU\033[0m")
+    languages = ['tagalog', 'persian']  # ['arabic']#
+    lang_codes = ['tl', 'fa']  # ar
+
+    # if spacy.prefer_gpu():
+    #     print("Running with \033[1;92mGPU\033[0m")
+    # else:
+    #     print("Running with \033[1;31mNO GPU\033[0m")
 
     for i, language in enumerate(languages):
-        
         start_time = time.time()
-        # Initialize the spacy model using spacy_conll
+        
+        # Initialize the blank spacy model
         nlp = spacy.blank(f"{lang_codes[i]}")
 
-        # Add the 'tok2vec' and 'tagger' components if not already present
+        # Add the 'tok2vec', 'tagger', and 'parser' components if not already present
         if 'tok2vec' not in nlp.pipe_names:
             nlp.add_pipe('tok2vec', first=True)  # Add as the first component
         
         if 'tagger' not in nlp.pipe_names:
             nlp.add_pipe('tagger', last=True)  # Add POS tagger as the last component
-
-             # Add the 'parser' component for dependency parsing
+        
         if 'parser' not in nlp.pipe_names:
             nlp.add_pipe('parser', before='tagger')  # Add the parser before the tagger component
 
-        train_data, pos_tags, dep_labels = data.get_conll_data(f"{language}/train", nlp)
+        # Load the training data
+        train_data, pos_tags, dep_labels = data.get_conllu_data(f"{language}/train", nlp)
+        print(train_data[:1])
         
+        # Get the tagger and parser
         tagger = nlp.get_pipe("tagger")
+        parser = nlp.get_pipe("parser")
+        
         # Add labels to the tagger
         for tag in pos_tags:
             tagger.add_label(tag)
-
-        parser = nlp.get_pipe("parser")
-    
+        
+        # Add labels to the parser
         for dep_label in dep_labels:
             parser.add_label(dep_label)
-        
+
         # Start training the model
         optimizer = nlp.begin_training()
         n_iter = 10  # Set the number of iterations for training
@@ -64,17 +57,27 @@ if __name__ == "__main__":
             
             # Create minibatches and train the model
             batches = minibatch(train_data, size=compounding(4.0, 32.0, 1.001))
+            
             for batch in batches:
+                i = 0
                 for example in batch:
+                    if i == 1:
+                        print("Text:", example.text)
+                        for key, value in example.reference.items():
+                            print(f"  {key}: {value}")
                     nlp.update([example], losses=losses)
+                    i += 1
+
             epoch_end_time = time.time()
-            print(f"Epoch {epoch + 1}/{n_iter}, Losses: {losses}, in {epoch_end_time - epoch_start_time} seconds")
+            print(f"Epoch {epoch + 1}/{n_iter}, Losses: {losses}, Time: {epoch_end_time - epoch_start_time:.2f} seconds")
 
         # Save the trained model
-        nlp.to_disk(f"{language}/output/{lang_codes[i]}_dep_web_sm")
+        model_output_path = f"{language}/output/{lang_codes[i]}_dep_web_sm"
+        nlp.to_disk(model_output_path)
+        
         end_time = time.time()
         print("@" * 60)
-        print(f"     Time elapsed for {language}: {end_time - start_time}  ")
+        print(f"     Time elapsed for {language}: {end_time - start_time:.2f} seconds")
         print(f" ________________________________________________________ ")
         print(f"|                                                        | ")
         print(f"|      Training complete and model saved to disk.        |")
