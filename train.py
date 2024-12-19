@@ -32,7 +32,8 @@ if __name__ == "__main__":
 
         # Load the training data
         train_data, pos_tags, dep_labels = data.get_conllu_data(f"{language}/train", nlp)
-        print(train_data[:1])
+        
+        #print(train_data[:1])
         
         # Get the tagger and parser
         tagger = nlp.get_pipe("tagger")
@@ -59,14 +60,8 @@ if __name__ == "__main__":
             batches = minibatch(train_data, size=compounding(4.0, 32.0, 1.001))
             
             for batch in batches:
-                i = 0
                 for example in batch:
-                    if i == 1:
-                        print("Text:", example.text)
-                        for key, value in example.reference.items():
-                            print(f"  {key}: {value}")
                     nlp.update([example], losses=losses)
-                    i += 1
 
             epoch_end_time = time.time()
             print(f"Epoch {epoch + 1}/{n_iter}, Losses: {losses}, Time: {epoch_end_time - epoch_start_time:.2f} seconds")
