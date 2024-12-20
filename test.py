@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     for language, lang_code in zip(languages, lang_codes):
         nlp = spacy.load(f"{language}/output/{lang_code}_dep_web_sm")
-        test_data, _, _ = data.get_conllu_data(f"{language}/test", nlp)
+        test_data, _, _, _, _ = data.get_conllu_data(f"{language}/test", nlp)
         print(f"Loaded model for {language} ({lang_code})")
 
 
@@ -31,7 +31,7 @@ if __name__ == "__main__":
         correct_preds = 0
         for ref_token, pred_token in zip(doc_ref, doc_pred):
             print(f"Reference: \tToken: \t{ref_token.text}\t Head: {ref_token.head.text}\t Dep: {ref_token.dep_}\t POS: {ref_token.pos_}")
-            print(f"Predicted: \tToken: {pred_token.text}\t Head: {pred_token.head.text}]\t Dep: {pred_token.dep_}\t POS: {pred_token.tag_}\n")
+            print(f"Predicted: \tToken: {pred_token.text}\t Head: {pred_token.head.text}]\t Dep: {pred_token.dep_}\t POS: {pred_token.pos_}\n")
             if ref_token.pos_ == pred_token.tag_:
                 correct_preds += 1
         

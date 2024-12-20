@@ -35,30 +35,30 @@ def strip_multiword_tokens_from_conllu(filepath: str): # removes multiword token
 def get_conllu_data(directory: str, nlp):
     combined_conllu_data = []
     filepaths = get_conllu_filepaths_from_directory(directory)
-    # conll_nlp = spacy_conll.ConllParser(spacy_conll.init_parser('xx_ent_wiki_sm', 'spacy'))
     
+    # Initialize lists to store different types of features
     upos_types = []
     xpos_types = []
     dep_types = []
+    unique_feats = set()  # Set to store unique morphological feature combinations
+
     # Loop through all CoNLL files and parse them
     for filepath in filepaths:
         with open(filepath, 'r', encoding='utf-8') as f:
             conllu_data = f.read()
 
-        
         text = strip_multiword_tokens_from_conllu(filepath)
-        # Parse the CONLL-U data
         sentences = parse(text)
-        
+
         # Prepare a list to store the training examples
         training_data = []
 
-        unique_upos_tags = []
-        unique_xpos_tags = []
-        unique_dep_labels = []
+        # Unique tags and dependency relations for the current sentence
+        unique_upos_tags = set()
+        unique_xpos_tags = set()
+        unique_dep_labels = set()
 
         for sentence in sentences:
-            # Extract the tokens and their annotations for this sentence
             words = []
             tags = []
             xpos_tags = []
@@ -68,11 +68,9 @@ def get_conllu_data(directory: str, nlp):
             feats = []
             spaces = []
             sent_starts = []
-            
 
             # Process each token in the sentence
             for token in sentence:
-                # Get the text (word), POS, and dependency relation
                 word = token['form']
                 upos_tag = token['upostag']
                 xpos_tag = token['xpostag']
@@ -80,95 +78,75 @@ def get_conllu_data(directory: str, nlp):
                 lemma = token['lemma']
                 feat = token['feats']
                 
+                # Process morphological features
+                if feat:
+                    # Check if feat is a dictionary or a string
+                    if isinstance(feat, str):
+                        feat_dict = dict(f.split('=') for f in feat.split('|'))
+                    elif isinstance(feat, dict):
+                        feat_dict = feat
+                    else:
+                        feat_dict = {}
+
+                    # Add the feature dictionary to the set of unique morphological features
+                    unique_feats.add(frozenset(feat_dict.items()))  # Use frozenset to store unique combinations
+
                 head = int(token['head'])  # Head is 1-based index
                 try:
                     space_after = (token['misc']['SpaceAfter'] == 'Yes')
                 except:
-                    if token['form'] in ['.','?','!']:
+                    if token['form'] in ['.', '?', '!']:
                         space_after = False
                     else:
                         space_after = True
-                if token['id'] == 1:
-                    sent_start = True
-                else:
-                    sent_start = False
+                sent_start = (token['id'] == 1)
 
-                if upos_tag not in unique_upos_tags:
-                    unique_upos_tags.append(upos_tag)
-                if xpos_tag not in unique_xpos_tags:
-                    unique_xpos_tags.append(xpos_tag)
-                if dep_rel not in unique_dep_labels:
-                    unique_dep_labels.append(dep_rel)
+                # Collect the unique POS tags and dependency labels
+                unique_upos_tags.add(upos_tag)
+                unique_xpos_tags.add(xpos_tag)
+                unique_dep_labels.add(dep_rel)
 
-                spacy_pos_list = [
-                    "ADJ",   # Adjective
-                    "ADP",   # Adposition
-                    "ADV",   # Adverb
-                    "AUX",   # Auxiliary verb
-                    "CCONJ", # Coordinating conjunction
-                    "DET",   # Determiner
-                    "INTJ",  # Interjection
-                    "NOUN",  # Noun
-                    "NUM",   # Numeral
-                    "PART",  # Particle
-                    "PRON",  # Pronoun
-                    "PROPN", # Proper noun
-                    "PUNCT", # Punctuation
-                    "SCONJ", # Subordinating conjunction
-                    "SYM",   # Symbol
-                    "VERB",  # Verb
-                    "X"    ] # Other
+                # Store token-level information for building the Example
                 words.append(word)
-                
-                if upos_tag in spacy_pos_list:
-                    tags.append(upos_tag) # ensure all tags are good to go - was having troubles getting tagger component to predict in the .pos_ attribute instead of the .tag_ attribute
-                else:
-                    tags.append('X') # default to 'other' if there's some issue
-
-                fixed_head = fix_head_index(head, token['id'])
+                tags.append(upos_tag)
                 xpos_tags.append(xpos_tag)
-                heads.append(fixed_head)
+                heads.append(fix_head_index(head, token['id']))
                 deps.append(dep_rel)
                 lemmas.append(lemma)
                 feats.append(feat)
                 spaces.append(space_after)
                 sent_starts.append(sent_start)
 
-            # fix heads here
-            
-            # Create a doc object using the words (this will use spaCy's tokenizer)
+            # Create a spaCy Doc object
             doc = nlp.make_doc(' '.join(words))  # Create a doc from the sentence
             annotations = {
-                "words": words,   # The words (tokens)
-                "pos": tags,     # The POS tags
-                #"tags": xpos_tags,
-                "lemmas" :lemmas,
-                #"feats":feats,
-                "heads": heads ,   # The head (parent) indices
-                "deps": deps,     # Dependency relations
-                "spaces": spaces, 
+                "words": words,
+                "pos": tags,
+                "lemmas": lemmas,
+                "heads": heads,
+                "deps": deps,
+                "spaces": spaces,
                 "sent_starts": sent_starts
             }
 
-
             example = Example.from_dict(doc, annotations)
-            
             training_data.append(example)
-        
-            
+
+        # Add the training data to the combined dataset
         combined_conllu_data.extend(training_data)
-        for upos, xpos, label in zip(unique_upos_tags,unique_xpos_tags, unique_dep_labels):
-            if upos not in upos_types:
-                upos_types.append(upos)
-            if xpos not in xpos_types:
-                xpos_types.append(xpos)
-            if label not in dep_types:
-                dep_types.append(label)
-    
+
+        # Add unique tags and dependency labels
+        upos_types.extend(unique_upos_tags)
+        xpos_types.extend(unique_xpos_tags)
+        dep_types.extend(unique_dep_labels)
+
+    # Print out summary
     print("=" * 60)
     print(f"Spacy-friendly data created with \033[1;92m{len(combined_conllu_data)}\033[0m samples!")
     print("=" * 60)
-    return combined_conllu_data, upos_types, xpos_types, dep_types
+
+    # Return the combined dataset and the unique features for the morphologizer
+    return combined_conllu_data, list(set(upos_types)), list(set(xpos_types)), list(set(dep_types)), [dict(feat) for feat in unique_feats]
 
 def fix_head_index(head, token_id):
     """
@@ -183,4 +161,8 @@ def fix_head_index(head, token_id):
 
 if __name__ == "__main__":
     import spacy
-    get_conllu_data('tagalog/train', spacy.blank('tl'))
+    languages = ['arabic', 'indonesian','tagalog','persian']
+    lang_codes = ['ar','id','tl','fa']
+    for language, code in zip(languages, lang_codes):
+        for test_train in ['test','train']:
+            get_conllu_data('tagalog/train', spacy.blank(f'{code}'))

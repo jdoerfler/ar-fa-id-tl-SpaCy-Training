@@ -21,22 +21,26 @@ if __name__ == "__main__":
         # Initialize the blank spacy model
         nlp = spacy.blank(f"{lang_codes[i]}")
 
-        # Add the 'tok2vec', 'tagger', and 'parser' components if not already present
+        # Add components in correct order with proper configuration
         if 'tok2vec' not in nlp.pipe_names:
-            nlp.add_pipe('tok2vec', first=True)  # Add as the first component
-        
-        if 'tagger' not in nlp.pipe_names:
-            nlp.add_pipe('tagger', last=True)  # Add POS tagger as the last component
+            nlp.add_pipe('tok2vec', first=True)
+            
+        if 'morphologizer' not in nlp.pipe_names:
+            nlp.add_pipe('morphologizer')
         
         if 'parser' not in nlp.pipe_names:
-            nlp.add_pipe('parser', before='tagger')  # Add the parser before the tagger component
+            nlp.add_pipe('parser')
         
-        if 'morphologizer' not in nlp.pipe_names:
-            nlp.add_pipe('morphologizer', last=True)  # Add the morphologizer as a component
+        if 'tagger' not in nlp.pipe_names:
+            nlp.add_pipe('tagger')
+        
+        
 
+        # Verify pipeline configuration
+        print("Pipeline:", nlp.pipe_names)
 
         # Load the training data
-        train_data, upos_tags, xpos_tags, dep_labels = data.get_conllu_data(f"{language}/train", nlp)
+        train_data, upos_tags, xpos_tags, dep_labels, features = data.get_conllu_data(f"{language}/train", nlp)
         
         #print(train_data[:1])
         
@@ -45,20 +49,21 @@ if __name__ == "__main__":
         parser = nlp.get_pipe("parser")
         morphologizer = nlp.get_pipe('morphologizer')
         
-        features = [
-            {"Gender": "Masc", "Number": "Sing"},
-            {"Gender": "Fem", "Number": "Plur"},
-            {"Case": "Nom", "Number": "Sing"},
-            {"Tense": "Pres", "VerbForm": "Fin"}
-        ]
-
-        # Adding labels for morphological features
-        for feature in features:
-            morphologizer.add_label(feature)
+        # Add UPOS tags to morphologizer
+        print("Adding UPOS tags to morphologizer:", upos_tags)
+        for tag in upos_tags:
+            morphologizer.add_label(f"POS={tag}")
+    
+        for feature_dict in features:
+            for feature, value in feature_dict.items():
+                # Create a string label in the format 'Feature=Value'
+                label = f"{feature}={value}"
+                print(label)  # This will print out labels like "Case=Loc"
+                morphologizer.add_label(label)
         
-        if xpos_tags[0] is not None:
-            for tag in xpos_tags:
-                tagger.add_label(tag)
+        
+        for tag in upos_tags:
+            tagger.add_label(tag)
         
         # Add labels to the parser
         for dep_label in dep_labels:
