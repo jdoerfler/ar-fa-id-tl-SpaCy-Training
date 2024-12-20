@@ -37,7 +37,8 @@
       "obj",
       "obj:agent",
       "obl",
-      "punct"
+      "punct",
+      "root"
     ],
     "tagger":[
       "PART",

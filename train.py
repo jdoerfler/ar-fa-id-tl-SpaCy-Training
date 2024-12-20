@@ -3,10 +3,11 @@ import time
 import random
 from spacy.training.example import Example
 from spacy.util import minibatch, compounding
-import data  # Assuming `data` is your custom module to load training data
+import data  
+from tqdm import tqdm
 
 if __name__ == "__main__":
-    languages = ['tagalog', 'persian']  # ['arabic']#
+    languages = ['tagalog']#, 'persian']  # ['arabic']#
     lang_codes = ['tl', 'fa']  # ar
 
     # if spacy.prefer_gpu():
@@ -49,7 +50,7 @@ if __name__ == "__main__":
 
         # Start training the model
         optimizer = nlp.begin_training()
-        n_iter = 10  # Set the number of iterations for training
+        n_iter = 1  # Set the number of iterations for training
 
         for epoch in range(n_iter):
             epoch_start_time = time.time()
@@ -59,7 +60,9 @@ if __name__ == "__main__":
             # Create minibatches and train the model
             batches = minibatch(train_data, size=compounding(4.0, 32.0, 1.001))
             
-            for batch in batches:
+            batch_size = 1460
+            for j, batch in tqdm(enumerate(batches), total=batch_size, ncols=100):
+                batch_size *= 1.001
                 for example in batch:
                     nlp.update([example], losses=losses)
 

@@ -1,8 +1,8 @@
 import os
 import re
 from spacy.training.example import Example 
-import spacy_conll
 from conllu import parse
+from spacy.tokens import Doc
 
 def get_conllu_filepaths_from_directory(directory: str) -> list[str]:
     filepaths = []
@@ -12,7 +12,8 @@ def get_conllu_filepaths_from_directory(directory: str) -> list[str]:
             filepaths.append(filepath)
     return filepaths
 
-def strip_multiword_tokens_from_conllu(filepath: str):
+def strip_multiword_tokens_from_conllu(filepath: str): # removes multiword tokens, which may be incompatible with SpaCy or I just couldn't figure it out
+    
     # Define the regex pattern to match lines with '[0-9]+-[0-9]+'
     pattern = r"^[0-9]{1,3}[-.][0-9]{1,3}\t"
     
@@ -30,55 +31,6 @@ def strip_multiword_tokens_from_conllu(filepath: str):
     print(f"Finished stripping multiword tokens from {filepath}")
     return "".join(cleaned_lines)
 
-def get_conll_data(directory: str, nlp):
-    conll_data = []
-    filepaths = get_conllu_filepaths_from_directory(directory)
-    conll_nlp = spacy_conll.ConllParser(spacy_conll.init_parser('xx_ent_wiki_sm', 'spacy'))
-    
-    pos_types = []
-    dep_types = []
-    # Loop through all CoNLL files and parse them
-    for filepath in filepaths:
-        #doc = conll_nlp.parse_conll_file_as_spacy(filepath, input_encoding='utf-8')
-        text = strip_multiword_tokens_from_conllu(filepath)
-        doc = conll_nlp.parse_conll_text_as_spacy(text)
-        unique_pos_tags = []
-        unique_dep_labels = []
-        # Create training examples from the parsed doc
-        for sent in doc.sents:
-            words = []
-            pos_tags = []
-            for token in sent:
-                words.append(token.text)
-                pos_tags.append(token.pos_)
-                dep_labels = [token.dep_ for token in sent]
-
-                if token.pos_ not in unique_pos_tags:
-                    unique_pos_tags.append(token.pos_)
-                if token.dep_ not in unique_dep_labels:
-                    unique_dep_labels.append(token.dep_)
-
-            # words = [token.text for token in sent]
-            # pos_tags = [token.pos_ for token in sent]
-            annotations = {
-                    'tags': pos_tags,
-                    'deps': dep_labels
-                }
-            try: 
-                example = Example.from_dict(nlp.make_doc(" ".join(words)), annotations)
-                conll_data.append(example)
-            except: pass
-        
-        for tag, label in zip(unique_pos_tags, unique_dep_labels):
-            if tag not in pos_types:
-                pos_types.append(tag)
-            if label not in dep_types:
-                dep_types.append(label)
-
-    print("=" * 60)
-    print(f"Spacy-friendly data created with \033[1;92m{len(conll_data)}\033[0m samples!")
-    print("=" * 60)
-    return conll_data, pos_types, dep_types
 
 def get_conllu_data(directory: str, nlp):
     combined_conllu_data = []
@@ -92,6 +44,7 @@ def get_conllu_data(directory: str, nlp):
         with open(filepath, 'r', encoding='utf-8') as f:
             conllu_data = f.read()
 
+        
         text = strip_multiword_tokens_from_conllu(filepath)
         # Parse the CONLL-U data
         sentences = parse(text)
@@ -135,9 +88,31 @@ def get_conllu_data(directory: str, nlp):
                 if dep_rel not in unique_dep_labels:
                     unique_dep_labels.append(dep_rel)
 
-                # Append to the lists
+                spacy_pos_list = [
+                    "ADJ",   # Adjective
+                    "ADP",   # Adposition
+                    "ADV",   # Adverb
+                    "AUX",   # Auxiliary verb
+                    "CCONJ", # Coordinating conjunction
+                    "DET",   # Determiner
+                    "INTJ",  # Interjection
+                    "NOUN",  # Noun
+                    "NUM",   # Numeral
+                    "PART",  # Particle
+                    "PRON",  # Pronoun
+                    "PROPN", # Proper noun
+                    "PUNCT", # Punctuation
+                    "SCONJ", # Subordinating conjunction
+                    "SYM",   # Symbol
+                    "VERB",  # Verb
+                    "X"    ] # Other
                 words.append(word)
-                tags.append(pos_tag)
+                
+                if pos_tag in spacy_pos_list:
+                    tags.append(pos_tag) # ensure all tags are good to go - was having troubles getting tagger component to predict in the .pos_ attribute instead of the .tag_ attribute
+                else:
+                    tags.append('X') # default to 'other' if there's some issue
+
                 fixed_head = fix_head_index(head, token['id'])
                 heads.append(fixed_head)
                 deps.append(dep_rel)
@@ -148,21 +123,21 @@ def get_conllu_data(directory: str, nlp):
             
             # Create a doc object using the words (this will use spaCy's tokenizer)
             doc = nlp.make_doc(' '.join(words))  # Create a doc from the sentence
-            for token in doc:
-                print(token)
             annotations = {
                 "words": words,   # The words (tokens)
-                "tags": tags,     # The POS tags
+                "pos": tags,     # The POS tags
                 "heads": heads ,   # The head (parent) indices
                 "deps": deps,     # Dependency relations
                 "spaces": spaces, 
                 "sent_starts": sent_starts
             }
-            # Create the Example object with the annotations
+
+
             example = Example.from_dict(doc, annotations)
             
-            # Append the example to the training data list
             training_data.append(example)
+        
+            
         combined_conllu_data.extend(training_data)
         for tag, label in zip(unique_pos_tags, unique_dep_labels):
             if tag not in pos_types:
@@ -177,15 +152,12 @@ def get_conllu_data(directory: str, nlp):
 
 def fix_head_index(head, token_id):
     """
-    Fixes the head indices in the annotation data by ensuring they are relative to the token list.
+    Fixes the head indices in the annotation data by ensuring they are ABSOLUTE and HEAD is not 0, which is CoNLL-U standard.
     """
-    # head is absolute, needs to be relative
-    # heads = [3,1,0,3,3,3]
-    # idx = [2,1,-1,2,2,2]
     if head == 0:
-        return 0
+        return token_id - 1
     else:
-        return head - token_id
+        return head - 1
     
 
 
