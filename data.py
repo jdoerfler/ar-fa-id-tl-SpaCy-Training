@@ -165,4 +165,4 @@ if __name__ == "__main__":
     lang_codes = ['ar','id','tl','fa']
     for language, code in zip(languages, lang_codes):
         for test_train in ['test','train']:
-            get_conllu_data('tagalog/train', spacy.blank(f'{code}'))
+            get_conllu_data(f'{language}/{test_train}', spacy.blank(f'{code}'))
