@@ -30,19 +30,35 @@ if __name__ == "__main__":
         
         if 'parser' not in nlp.pipe_names:
             nlp.add_pipe('parser', before='tagger')  # Add the parser before the tagger component
+        
+        if 'morphologizer' not in nlp.pipe_names:
+            nlp.add_pipe('morphologizer', last=True)  # Add the morphologizer as a component
+
 
         # Load the training data
-        train_data, pos_tags, dep_labels = data.get_conllu_data(f"{language}/train", nlp)
+        train_data, upos_tags, xpos_tags, dep_labels = data.get_conllu_data(f"{language}/train", nlp)
         
         #print(train_data[:1])
         
         # Get the tagger and parser
         tagger = nlp.get_pipe("tagger")
         parser = nlp.get_pipe("parser")
+        morphologizer = nlp.get_pipe('morphologizer')
         
-        # Add labels to the tagger
-        for tag in pos_tags:
-            tagger.add_label(tag)
+        features = [
+            {"Gender": "Masc", "Number": "Sing"},
+            {"Gender": "Fem", "Number": "Plur"},
+            {"Case": "Nom", "Number": "Sing"},
+            {"Tense": "Pres", "VerbForm": "Fin"}
+        ]
+
+        # Adding labels for morphological features
+        for feature in features:
+            morphologizer.add_label(feature)
+        
+        if xpos_tags[0] is not None:
+            for tag in xpos_tags:
+                tagger.add_label(tag)
         
         # Add labels to the parser
         for dep_label in dep_labels:
