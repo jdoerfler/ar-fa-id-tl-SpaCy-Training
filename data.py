@@ -117,9 +117,9 @@ def get_conllu_data(directory: str, nlp):
                 word = token['form']
                 pos_tag = token['upostag']
                 dep_rel = token['deprel']
-                head = token['head']  # Head is 1-based index
+                head = int(token['head'])  # Head is 1-based index
                 try:
-                    space_after = token['SpaceAfter'] == 'Yes'
+                    space_after = (token['misc']['SpaceAfter'] == 'Yes')
                 except:
                     if token['form'] in ['.','?','!']:
                         space_after = False
@@ -138,7 +138,7 @@ def get_conllu_data(directory: str, nlp):
                 # Append to the lists
                 words.append(word)
                 tags.append(pos_tag)
-                fixed_head = fix_head_index(head)
+                fixed_head = fix_head_index(head, token['id'])
                 heads.append(fixed_head)
                 deps.append(dep_rel)
                 spaces.append(space_after)
@@ -147,7 +147,9 @@ def get_conllu_data(directory: str, nlp):
             # fix heads here
             
             # Create a doc object using the words (this will use spaCy's tokenizer)
-            doc = nlp.make_doc(" ".join(words))  # Create a doc from the sentence
+            doc = nlp.make_doc(' '.join(words))  # Create a doc from the sentence
+            for token in doc:
+                print(token)
             annotations = {
                 "words": words,   # The words (tokens)
                 "tags": tags,     # The POS tags
@@ -173,17 +175,20 @@ def get_conllu_data(directory: str, nlp):
     print("=" * 60)
     return combined_conllu_data, pos_types, dep_types
 
-def fix_head_index(head):
+def fix_head_index(head, token_id):
     """
     Fixes the head indices in the annotation data by ensuring they are relative to the token list.
     """
+    # head is absolute, needs to be relative
+    # heads = [3,1,0,3,3,3]
+    # idx = [2,1,-1,2,2,2]
     if head == 0:
-        return head
-    elif head > 0:
-        head -=1
-        return head
+        return 0
+    else:
+        return head - token_id
+    
 
 
 if __name__ == "__main__":
     import spacy
-    get_conllu_data('tagalog/train', spacy.blank('fa'))
+    get_conllu_data('tagalog/train', spacy.blank('tl'))
