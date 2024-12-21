@@ -7,31 +7,19 @@ For all .conllu files, ran convert_xpos_to_upos to let tagger train off just par
 Indonesian:
 Trained on [id_csui-ud-train.conllu, id_gsd-ud-train.conllu]
 Tested on [id_csui-ud-test.conllu, id_gsd-ud-test.conllu]
-SpaCy evaluate stats:
-TOK     98.08
-TAG     80.32
-SPEED   25275
+https://huggingface.co/jdoerfler/SpaCy-id_dep_web_sm
 
 Arabic:
 Trained on [ar_padt-ud-train.conllu]
 Tested on [ajp_madar-ud-test.conllu, ar_padt-ud-test.conllu]
-SpaCy evaluate stats:
-TOK     84.00
-TAG     40.63
-SPEED   42311
+https://huggingface.co/jdoerfler/SpaCy-ar_dep_web_sm
 
 PERSIAN:
 Trained on [fa_perdt-ud-train.conllu, fa_seraji-ud-train.conllu]
 Tested on [fa_perdt-ud-test.conllu, fa_seraji-ud-test.conllu]
-SpaCy evaluate stats: 
-TOK     99.96
-TAG     54.50
-SPEED   19211
+https://huggingface.co/jdoerfler/SpaCy-fa_dep_web_sm
 
 TAGALOG: 
 Trained on tl_newscrawl-ud-train.conllu
 Tested on [tl_newscrawl-us-test.conllu, tl_trg-ud-test.conllu, tl_ugnayan-ud-test.conllu]
-SpaCy evaluate stats:
-TOK     99.64
-TAG     93.68
-SPEED   44800
+https://huggingface.co/jdoerfler/SpaCy-tl_dep_web_sm
