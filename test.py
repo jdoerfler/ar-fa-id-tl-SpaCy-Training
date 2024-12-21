@@ -3,14 +3,14 @@ import data
 from spacy.training.example import Example
 
 if __name__ == "__main__":
-    languages = ['tagalog'] #['arabic','indonesian','persian','tagalog']
-    lang_codes = ['tl'] #['ar','id','fa','tl']
+    languages = ['arabic','indonesian','persian','tagalog']
+    lang_codes = ['ar','id','fa','tl']
     spacy.prefer_gpu()
 
     for language, lang_code in zip(languages, lang_codes):
         nlp = spacy.load(f"{language}/output/{lang_code}_dep_web_sm")
         test_data, _, _, _, _ = data.get_conllu_data(f"{language}/test", nlp)
-        print(f"Loaded model for {language} ({lang_code})")
+#        print(f"Loaded model for {language} ({lang_code})")
 
 
         # Evaluate the model on the test data
@@ -30,9 +30,9 @@ if __name__ == "__main__":
         total_preds = len(doc_pred)
         correct_preds = 0
         for ref_token, pred_token in zip(doc_ref, doc_pred):
-            print(f"Reference: \tToken: \t{ref_token.text}\t Head: {ref_token.head.text}\t Dep: {ref_token.dep_}\t POS: {ref_token.pos_}")
-            print(f"Predicted: \tToken: {pred_token.text}\t Head: {pred_token.head.text}]\t Dep: {pred_token.dep_}\t POS: {pred_token.pos_}\n")
-            if ref_token.pos_ == pred_token.tag_:
+            #print(f"Reference: \tToken: {ref_token.text}\t Head: {ref_token.head.text}\t Dep: {ref_token.dep_}\t POS: {ref_token.pos_}")
+            #print(f"Predicted: \tToken: {pred_token.text}\t Head: {pred_token.head.text}]\t Dep: {pred_token.dep_}\t POS: {pred_token.pos_}\n")
+            if ref_token.pos_ == pred_token.pos_:
                 correct_preds += 1
         
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
         # print(f"  - Precision: {scores['token_p']:.4f}")
         # print(f"  - Recall: {scores['token_r']:.4f}")
         # print(f"  - F1 Score: {scores['token_f']:.4f}")
-        print(f"  - Tagger accuracy: {correct_preds/total_preds:.4f}")
+        print(f"  - POS accuracy: {scores['pos_acc']:.4f}")
         #print(f"  - Tagger accuracy: {scores['tag_acc']:.4f}")
         print(f"  - Dep head accuracy: {scores['dep_uas']:.4f}")
         print(f"  - Dep label accuracy: {scores['dep_las']:.4f}")

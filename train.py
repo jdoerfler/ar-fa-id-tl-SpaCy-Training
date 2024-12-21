@@ -73,12 +73,13 @@ def train_language(language, lang_code):
         
         # Create minibatches and train the model
         batches = minibatch(train_data, size=compounding(4.0, 32.0, 1.001))
-        
-        batch_size = 1460
-        for j, batch in tqdm(enumerate(batches), total=batch_size, ncols=100):
-            batch_size *= 1.001
+        k = 0
+        for j, batch in enumerate(batches):
             for example in batch:
                 nlp.update([example], losses=losses)
+                k += 1
+                if k % 500 == 0:
+                    print(f'{lang_code} at example {k} in batch {j}')
 
         epoch_end_time = time.time()
         print(f"{language}: Epoch {epoch + 1}/{n_iter}, Losses: {losses}, Time: {epoch_end_time - epoch_start_time:.2f} seconds")
