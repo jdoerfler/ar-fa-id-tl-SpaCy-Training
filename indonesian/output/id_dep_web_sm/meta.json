@@ -1,14 +1,14 @@
 {
-  "lang":"id",
-  "name":"pipeline",
-  "version":"0.0.0",
-  "spacy_version":">=3.8.3,<3.9.0",
-  "description":"",
-  "author":"",
-  "email":"",
-  "url":"",
-  "license":"",
-  "spacy_git_version":"be0fa81",
+  "lang":"xx",
+  "name":"ent_wiki_sm",
+  "version":"3.8.0",
+  "description":"Multi-language pipeline optimized for CPU. Components: ner.",
+  "author":"Explosion",
+  "email":"contact@explosion.ai",
+  "url":"https://explosion.ai",
+  "license":"MIT",
+  "spacy_version":">=3.8.0,<3.9.0",
+  "spacy_git_version":"5010fcbd3",
   "vectors":{
     "width":0,
     "vectors":0,
@@ -20,55 +20,61 @@
     "tok2vec":[
 
     ],
+    "ner":[
+      "LOC",
+      "MISC",
+      "ORG",
+      "PER"
+    ],
     "morphologizer":[
-      "POS=X",
-      "POS=NOUN",
-      "POS=AUX",
-      "POS=PUNCT",
-      "POS=VERB",
-      "POS=CCONJ",
+      "POS=SYM",
       "POS=PRON",
-      "POS=PROPN",
+      "POS=VERB",
+      "POS=PUNCT",
+      "POS=AUX",
+      "POS=ADJ",
+      "POS=ADV",
       "POS=NUM",
+      "POS=PROPN",
       "POS=ADP",
+      "POS=X",
+      "POS=PART",
+      "POS=DET",
       "POS=SCONJ",
       "POS=INTJ",
-      "POS=SYM",
-      "POS=DET",
-      "POS=ADV",
-      "POS=PART",
-      "POS=ADJ",
-      "Number=Sing",
-      "PronType=Ind",
-      "Typo=Yes",
-      "Foreign=Yes",
-      "Number=Plur",
-      "PronType=Int",
-      "PronType=Tot",
+      "POS=NOUN",
+      "POS=CCONJ",
       "PronType=Art",
-      "Definite=Def",
-      "NumType=Card",
-      "Polite=Infm",
+      "Definite=Ind",
+      "Number=Plur",
       "PronType=Prs",
-      "Person=1",
-      "PronType=Emp",
-      "Person=2",
+      "Person=3",
       "Abbr=Yes",
+      "Voice=Act",
+      "Mood=Ind",
+      "PronType=Ind",
+      "NumType=Card",
+      "PronType=Tot",
+      "Number=Sing",
+      "Mood=Imp",
+      "Degree=Sup",
+      "PronType=Rel",
+      "Typo=Yes",
+      "Clusivity=Ex",
+      "Person=1",
       "PronType=Dem",
       "NumType=Ord",
-      "Clusivity=In",
-      "Mood=Ind",
-      "Voice=Act",
-      "Mood=Imp",
-      "Polite=Form",
-      "Person=3",
       "Voice=Pass",
-      "PronType=Rel",
-      "Reflex=Yes",
-      "Clusivity=Ex",
-      "Degree=Sup",
       "Polarity=Neg",
-      "Definite=Ind"
+      "Polite=Form",
+      "Person=2",
+      "Polite=Infm",
+      "Foreign=Yes",
+      "PronType=Emp",
+      "Reflex=Yes",
+      "Clusivity=In",
+      "Definite=Def",
+      "PronType=Int"
     ],
     "parser":[
       "ROOT",
@@ -123,38 +129,79 @@
       "xcomp"
     ],
     "tagger":[
-      "X",
-      "NOUN",
-      "AUX",
-      "PUNCT",
-      "VERB",
-      "CCONJ",
+      "SYM",
       "PRON",
-      "PROPN",
+      "VERB",
+      "PUNCT",
+      "AUX",
+      "ADJ",
+      "ADV",
       "NUM",
+      "PROPN",
       "ADP",
+      "X",
+      "PART",
+      "DET",
       "SCONJ",
       "INTJ",
-      "SYM",
-      "DET",
-      "ADV",
-      "PART",
-      "ADJ"
+      "NOUN",
+      "CCONJ"
     ]
   },
   "pipeline":[
     "tok2vec",
+    "ner",
     "morphologizer",
     "parser",
     "tagger"
   ],
   "components":[
     "tok2vec",
+    "ner",
     "morphologizer",
     "parser",
     "tagger"
   ],
   "disabled":[
+
+  ],
+  "performance":{
+    "ents_p":0.8356510289,
+    "ents_r":0.8271470739,
+    "ents_f":0.8313773058,
+    "ents_per_type":{
+      "LOC":{
+        "p":0.8455438352,
+        "r":0.873817232,
+        "f":0.8594480679
+      },
+      "PER":{
+        "p":0.8720573183,
+        "r":0.8988198141,
+        "f":0.8852363412
+      },
+      "MISC":{
+        "p":0.7719140454,
+        "r":0.6715873402,
+        "f":0.7182642231
+      },
+      "ORG":{
+        "p":0.7838007911,
+        "r":0.7022164234,
+        "f":0.7407690608
+      }
+    },
+    "speed":19567.1402629334
+  },
+  "sources":[
+    {
+      "name":"WikiNER",
+      "url":"https://figshare.com/articles/Learning_multilingual_named_entity_recognition_from_Wikipedia/5462500",
+      "license":"CC BY 4.0",
+      "author":"Joel Nothman, Nicky Ringland, Will Radford, Tara Murphy, James R Curran"
+    }
+  ],
+  "requirements":[
 
   ]
 }

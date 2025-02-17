@@ -5,14 +5,16 @@ from spacy.training.example import Example
 from spacy.util import minibatch, compounding
 import data  
 from tqdm import tqdm
-import multiprocessing
-from functools import partial
+import os
 
 def train_language(language, lang_code):
     start_time = time.time()
         
+    # Ensure spaCy uses the GPU if available
+    spacy.require_gpu()  # Ensure that spaCy uses the GPU if available
+
     # Initialize the blank spacy model
-    nlp = spacy.blank(f"{lang_code}")
+    nlp = spacy.load("xx_ent_wiki_sm")
 
     # Add components in correct order with proper configuration
     if 'tok2vec' not in nlp.pipe_names:
@@ -27,15 +29,8 @@ def train_language(language, lang_code):
     if 'tagger' not in nlp.pipe_names:
         nlp.add_pipe('tagger')
     
-    
-
-    # Verify pipeline configuration
-    # print("Pipeline:", nlp.pipe_names)
-
     # Load the training data
     train_data, upos_tags, xpos_tags, dep_labels, features = data.get_conllu_data(f"{language}/train", nlp)
-    
-    #print(train_data[:1])
     
     # Get the tagger and parser
     tagger = nlp.get_pipe("tagger")
@@ -43,17 +38,13 @@ def train_language(language, lang_code):
     morphologizer = nlp.get_pipe('morphologizer')
     
     # Add UPOS tags to morphologizer
-    # print("Adding UPOS tags to morphologizer:", upos_tags)
     for tag in upos_tags:
         morphologizer.add_label(f"POS={tag}")
 
     for feature_dict in features:
         for feature, value in feature_dict.items():
-            # Create a string label in the format 'Feature=Value'
             label = f"{feature}={value}"
-            # print(label)  # This will print out labels like "Case=Loc"
             morphologizer.add_label(label)
-    
     
     for tag in upos_tags:
         tagger.add_label(tag)
@@ -100,27 +91,14 @@ def train_language(language, lang_code):
 if __name__ == "__main__":
     # Define languages and their codes
     language_pairs = [
-        ('tagalog', 'tl'),
+        #('tagalog', 'tl'),
         ('persian', 'fa'),
-        ('arabic', 'ar'),
-        ('indonesian','id')
+        #('arabic', 'ar'),
+        #('indonesian','id')
     ]
     
-    # Set up multiprocessing
-    num_processes = min(len(language_pairs), multiprocessing.cpu_count())
-    print(f"Starting training with {num_processes} processes...")
-    
-    # Create a pool of workers
-    with multiprocessing.Pool(processes=num_processes) as pool:
-        # Start training for all languages in parallel
-        results = pool.starmap(
-            train_language,
-            language_pairs
-        )
-    
-    # Print final summary
-    print("\nTraining Summary:")
-    print("-" * 40)
-    for language, training_time in results:
-        print(f"{language}: {training_time:.2f} seconds")
-    print("-" * 40)
+    # Start training for all languages sequentially
+    for language, lang_code in language_pairs:
+        train_language(language, lang_code)
+
+    print("\nTraining completed for all languages.")
