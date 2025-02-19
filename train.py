@@ -7,14 +7,11 @@ import data
 from tqdm import tqdm
 import os
 
-def train_language(language, lang_code):
-    start_time = time.time()
-        
-    # Ensure spaCy uses the GPU if available
-    spacy.require_gpu()  # Ensure that spaCy uses the GPU if available
 
+
+def load_model(base_model):
     # Initialize the blank spacy model
-    nlp = spacy.load("xx_ent_wiki_sm")
+    nlp = spacy.load(base_model) # "xx_ent_wiki_sm" if starting a new POS tagger
 
     # Add components in correct order with proper configuration
     if 'tok2vec' not in nlp.pipe_names:
@@ -28,7 +25,15 @@ def train_language(language, lang_code):
     
     if 'tagger' not in nlp.pipe_names:
         nlp.add_pipe('tagger')
+    return nlp
+def train_language(language, lang_code, base_model):
+    start_time = time.time()
+        
+    # Ensure spaCy uses the GPU if available
+    # spacy.require_gpu()  # Ensure that spaCy uses the GPU if available
+
     
+    nlp = load_model(base_model)
     # Load the training data
     train_data, upos_tags, xpos_tags, dep_labels, features = data.get_conllu_data(f"{language}/train", nlp)
     
@@ -64,14 +69,20 @@ def train_language(language, lang_code):
         
         # Create minibatches and train the model
         batches = minibatch(train_data, size=compounding(4.0, 32.0, 1.001))
+        # batches = minibatch(train_data, size=256)  # Fixed batch size of 64 to see if better for GPU
+
         k = 0
+        increment_time = time.time()
+        checkpoint_output_path = f"{language}/checkpoint/{lang_code}_dep_web_sm"
         for j, batch in enumerate(batches):
             for example in batch:
                 nlp.update([example], losses=losses)
                 k += 1
                 if k % 500 == 0:
-                    print(f'{lang_code} at example {k} in batch {j}')
-
+                    print(f'      {lang_code} at example {k} in batch {j}      ')
+                    print(f"- Time elapsed for these examples: {time.time() - increment_time:.2f} -")
+                    increment_time=time.time()
+        nlp.to_disk(checkpoint_output_path)
         epoch_end_time = time.time()
         print(f"{language}: Epoch {epoch + 1}/{n_iter}, Losses: {losses}, Time: {epoch_end_time - epoch_start_time:.2f} seconds")
 
@@ -92,13 +103,13 @@ if __name__ == "__main__":
     # Define languages and their codes
     language_pairs = [
         #('tagalog', 'tl'),
-        ('persian', 'fa'),
+        ('persian', 'fa','persian/checkpoint/fa_dep_web_sm'),
         #('arabic', 'ar'),
         #('indonesian','id')
     ]
     
     # Start training for all languages sequentially
-    for language, lang_code in language_pairs:
-        train_language(language, lang_code)
+    for language, lang_code, base_model in language_pairs:
+        train_language(language, lang_code, base_model)
 
     print("\nTraining completed for all languages.")
